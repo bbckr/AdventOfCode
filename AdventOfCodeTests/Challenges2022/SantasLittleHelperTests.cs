@@ -16,4 +16,18 @@ public class SantasLittleHelperTests
         var value = AdventOfCode.Challenges2022.SantasLittleHelper.Challenge2_GetHighestCalorieElves(limit);
         Console.WriteLine($"Total calories carried by the top {limit} elves: {value}");
     }
+
+    [Test]
+    public void Test_Challenge3_RockPaperScissors()
+    {
+        var value = AdventOfCode.Challenges2022.SantasLittleHelper.Challenge3_RockPaperScissors();
+        Console.WriteLine($"Total score from strategy guide: {value}");
+    }
+
+    [Test]
+    public void Test_Challenge4_RockPaperScissors()
+    {
+        var value = AdventOfCode.Challenges2022.SantasLittleHelper.Challenge4_RockPaperScissors();
+        Console.WriteLine($"Total score from new strategy guide: {value}");
+    }
 }
