@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using static System.Formats.Asn1.AsnWriter;
-using System.Text;
-
 namespace AdventOfCode.Challenges2022;
 
 /// <summary>
@@ -11,11 +5,9 @@ namespace AdventOfCode.Challenges2022;
 /// </summary>
 public class SantasLittleHelper
 {
-    private const string PathCalorieSheet = 
-        @"/Users/bckr/Repositories/AdventOfCode/AdventOfCode/Challenges2022/Input/elves_calorie_sheet.txt";
-    private const string PathRockPaperScissors =
-        @"/Users/bckr/Repositories/AdventOfCode/AdventOfCode/Challenges2022/Input/rock_paper_scissors.txt";
-
+    private static readonly string? ProjectDirectory = Directory.GetParent(Environment.CurrentDirectory)?.Parent?.Parent?.Parent?.FullName;
+    private static readonly string PathCalorieSheet = $"{ProjectDirectory}/AdventOfCode/Challenges2022/Input/elves_calorie_sheet.txt";
+    private static readonly string PathRockPaperScissors = $"{ProjectDirectory}/AdventOfCode/Challenges2022/Input/rock_paper_scissors.txt";
 
     /// <summary>
     /// Challenge #1
@@ -129,13 +121,15 @@ public class SantasLittleHelper
     /// <returns>The total score (int) based on the strategy guide.</returns>
     public static int Challenge3_RockPaperScissors()
     {
-        var strategyMap = new Dictionary<string, RockPaperScissorsAttack>();
-        strategyMap["A"] = RockPaperScissorsAttackMap[Attack.Rock];
-        strategyMap["B"] = RockPaperScissorsAttackMap[Attack.Paper];
-        strategyMap["C"] = RockPaperScissorsAttackMap[Attack.Scissors];
-        strategyMap["X"] = RockPaperScissorsAttackMap[Attack.Rock];
-        strategyMap["Y"] = RockPaperScissorsAttackMap[Attack.Paper];
-        strategyMap["Z"] = RockPaperScissorsAttackMap[Attack.Scissors];
+        var strategyMap = new Dictionary<string, RockPaperScissorsAttack>
+        {
+            ["A"] = RockPaperScissorsAttackMap[Attack.Rock],
+            ["B"] = RockPaperScissorsAttackMap[Attack.Paper],
+            ["C"] = RockPaperScissorsAttackMap[Attack.Scissors],
+            ["X"] = RockPaperScissorsAttackMap[Attack.Rock],
+            ["Y"] = RockPaperScissorsAttackMap[Attack.Paper],
+            ["Z"] = RockPaperScissorsAttackMap[Attack.Scissors]
+        };
 
         var finalScore = 0;
 
@@ -144,11 +138,7 @@ public class SantasLittleHelper
             var moves = line.Split(" ");
             var player1Attack = strategyMap[moves[0]];
             var player2Attack = strategyMap[moves[1]];
-
-            var outcome = player2Attack.Shoot(player1Attack);
-
-            finalScore += (int)outcome;
-            finalScore += player2Attack.Value;
+            finalScore += player2Attack.Score(player1Attack);
         }
 
         return finalScore;
@@ -175,15 +165,19 @@ public class SantasLittleHelper
     /// <returns>The total score (int) based on the new strategy guide.</returns>
     public static int Challenge4_RockPaperScissors()
     {
-        var strategyMap = new Dictionary<string, RockPaperScissorsAttack>();
-        strategyMap["A"] = RockPaperScissorsAttackMap[Attack.Rock];
-        strategyMap["B"] = RockPaperScissorsAttackMap[Attack.Paper];
-        strategyMap["C"] = RockPaperScissorsAttackMap[Attack.Scissors];
+        var strategyMap = new Dictionary<string, RockPaperScissorsAttack>
+        {
+            ["A"] = RockPaperScissorsAttackMap[Attack.Rock],
+            ["B"] = RockPaperScissorsAttackMap[Attack.Paper],
+            ["C"] = RockPaperScissorsAttackMap[Attack.Scissors]
+        };
 
-        var outcomeMap = new Dictionary<string, Outcome>();
-        outcomeMap["X"] = Outcome.Loss;
-        outcomeMap["Y"] = Outcome.Draw;
-        outcomeMap["Z"] = Outcome.Win;
+        var outcomeMap = new Dictionary<string, Outcome>
+        {
+            ["X"] = Outcome.Loss,
+            ["Y"] = Outcome.Draw,
+            ["Z"] = Outcome.Win
+        };
 
         var finalScore = 0;
 
@@ -191,12 +185,9 @@ public class SantasLittleHelper
         {
             var moves = line.Split(" ");
             var player1Attack = strategyMap[moves[0]];
-
             var outcome = outcomeMap[moves[1]];
-            finalScore += (int)outcome;
 
-            var player2Attack = player1Attack.Force(outcome);
-            finalScore += player2Attack.Value;
+            finalScore += player1Attack.ScoreOpponent(outcome);
         }
 
         return finalScore;
@@ -205,10 +196,25 @@ public class SantasLittleHelper
 
 public class RockPaperScissorsAttack
 {
-    public Attack Self;
-    public int Value;
-    public Attack Weakness;
-    public Attack Strength;
+    /// <summary>
+    /// Self is the type of attack.
+    /// </summary>
+    private readonly Attack Self;
+    
+    /// <summary>
+    /// Value is the points for the attack, no matter win or lose.
+    /// </summary>
+    private readonly int Value;
+    
+    /// <summary>
+    /// Weakness is the type of attack this attack will lose against.
+    /// </summary>
+    private readonly Attack Weakness;
+    
+    /// <summary>
+    /// Strength is the type of attach this attack with win against.
+    /// </summary>
+    private readonly Attack Strength;
 
     public RockPaperScissorsAttack(Attack self, int value, Attack weakness, Attack strength)
     {
@@ -218,7 +224,12 @@ public class RockPaperScissorsAttack
         Strength = strength;
     }
 
-    public Outcome Shoot(RockPaperScissorsAttack opponent)
+    /// <summary>
+    /// Shoot finds the outcome of the round for the given opponent.
+    /// </summary>
+    /// <param name="opponent">The opponent to shoot against.</param>
+    /// <returns></returns>
+    private Outcome Shoot(RockPaperScissorsAttack opponent)
     {
         if (Weakness == opponent.Self)
         {
@@ -233,22 +244,67 @@ public class RockPaperScissorsAttack
         return Outcome.Win;
     }
 
-    public RockPaperScissorsAttack Force(Outcome outcome)
+    /// <summary>
+    /// If returns the opponent you would have to face for a given outcome to happen.
+    /// </summary>
+    /// <param name="outcome">The desired outcome of the round.</param>
+    /// <param name="reverse">If you want the outcome of the round for the opponent.</param>
+    /// <returns>The opponent (RockPaperScissorsAttack) to face.</returns>
+    private RockPaperScissorsAttack If(Outcome outcome, bool reverse = false)
     {
-        if (outcome == Outcome.Loss)
+        if (outcome == Outcome.Draw)
         {
-            return SantasLittleHelper.RockPaperScissorsAttackMap[Strength];
+            return SantasLittleHelper.RockPaperScissorsAttackMap[Self];
         }
-
-        if (outcome == Outcome.Win)
+        
+        if ((outcome == Outcome.Loss && !reverse) || (outcome == Outcome.Win && reverse))
         {
             return SantasLittleHelper.RockPaperScissorsAttackMap[Weakness];
         }
 
-        return SantasLittleHelper.RockPaperScissorsAttackMap[Self];
+        return SantasLittleHelper.RockPaperScissorsAttackMap[Strength];
+    }
+
+    /// <summary>
+    /// Score shoots against an opponent and tallies the score for the round.
+    /// </summary>
+    /// <param name="opponent">The opponent to shoot against.</param>
+    /// <returns>The round score (int).</returns>
+    public int Score(RockPaperScissorsAttack opponent)
+    {
+        var outcome = this.Shoot(opponent);
+        return Score(outcome);
+    }
+
+    /// <summary>
+    /// Score tallies the score for the given outcome of the round.
+    /// </summary>
+    /// <param name="outcome">The outcome to simulate.</param>
+    /// <returns>The round score (int).</returns>
+    private int Score(Outcome outcome)
+    {
+        return (int)outcome + Value;
+    }
+
+    /// <summary>
+    /// ScoreOpponent tallies the score for the round based on the opponent outcome.
+    /// </summary>
+    /// <param name="outcome">The opponent outcome.</param>
+    /// <returns>The round score (int) of the opponent.</returns>
+    public int ScoreOpponent(Outcome outcome)
+    {
+        var roundScore = (int)outcome;
+
+        var player2Attack = If(outcome, true);
+        roundScore += player2Attack.Value;
+
+        return roundScore;
     }
 }
 
+/// <summary>
+/// Attack is the type of attack for a rock paper scissors game.
+/// </summary>
 public enum Attack
 {
     Rock,
@@ -256,7 +312,10 @@ public enum Attack
     Scissors
 }
 
-public enum Outcome : int
+/// <summary>
+/// Outcome is the round result with the score of the outcome.
+/// </summary>
+public enum Outcome
 {
     Win = 6,
     Draw = 3,
