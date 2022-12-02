@@ -6,8 +6,7 @@ public class SantasLittleHelperTests
     public void Test_Challenge1_GetHighestCalorieElf()
     {
         var value = AdventOfCode.Challenges2022.SantasLittleHelper.Challenge1_GetHighestCalorieElf();
-        Console.WriteLine($"Highest calories consumed by an elf: {value}");
-        Assert.Pass();
+        Console.WriteLine($"Highest calories carried by an elf: {value}");
     }
     
     [Test]
@@ -15,7 +14,6 @@ public class SantasLittleHelperTests
     {
         var limit = 3;
         var value = AdventOfCode.Challenges2022.SantasLittleHelper.Challenge2_GetHighestCalorieElves(limit);
-        Console.WriteLine($"Highest calories consumed by top {limit} elves: {value}");
-        Assert.Pass();
+        Console.WriteLine($"Total calories carried by the top {limit} elves: {value}");
     }
 }
